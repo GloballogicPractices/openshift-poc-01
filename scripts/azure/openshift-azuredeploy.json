@@ -1,0 +1,492 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "disks_openshift_Data_name": {
+            "defaultValue": "openshift_Data",
+            "type": "String"
+        },
+        "virtualMachines_openshift_name": {
+            "defaultValue": "openshift",
+            "type": "String"
+        },
+		"virtualMachines_openshift_password": {
+            "type": "String"
+        },
+        "networkInterfaces_openshift852_name": {
+            "defaultValue": "openshift852",
+            "type": "String"
+        },
+        "publicIPAddresses_openshift_ip_name": {
+            "defaultValue": "openshift-ip",
+            "type": "String"
+        },
+        "virtualNetworks_openshift_vnet_name": {
+            "defaultValue": "openshift-vnet",
+            "type": "String"
+        },
+        "storageAccounts_openshiftdiag345_name": {
+            "defaultValue": "openshiftdiag345",
+            "type": "String"
+        },
+        "networkSecurityGroups_openshift_nsg_name": {
+            "defaultValue": "openshift-nsg",
+            "type": "String"
+        },
+        "schedules_shutdown_computevm_openshift_name": {
+            "defaultValue": "shutdown-computevm-openshift",
+            "type": "String"
+        },
+        "subnets_default_name": {
+            "defaultValue": "default",
+            "type": "String"
+        },
+        "disks_openshift_OsDisk_1_a0cec7ca509640bd8d5173db83f9672e_name": {
+            "defaultValue": "openshift_OsDisk_1_a0cec7ca509640bd8d5173db83f9672e",
+            "type": "String"
+        },
+        "securityRules_default_allow_ssh_name": {
+            "defaultValue": "default-allow-ssh",
+            "type": "String"
+        },
+        "securityRules_Openshift_Console_8443_name": {
+            "defaultValue": "Openshift_Console_8443",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Compute/disks",
+            "name": "[parameters('disks_openshift_Data_name')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "northeurope",
+            "scale": null,
+            "properties": {
+                "accountType": "Standard_LRS",
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "diskSizeGB": 256
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('virtualMachines_openshift_name')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "northeurope",
+            "scale": null,
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_DS11"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "OpenLogic",
+                        "offer": "CentOS",
+                        "sku": "7.3",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+						"name": "[concat(parameters('virtualMachines_openshift_name'),'_OsDisk_1_a0cec7ca509640bd8d5173db83f9672e')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "diskSizeGB": 32
+                    },
+                    "dataDisks": [
+                        {
+                            "lun": 0,
+                            "name": "[concat(parameters('virtualMachines_openshift_name'),'_Data')]",
+                            "createOption": "Attach",
+                            "caching": "ReadWrite",
+                            "managedDisk": {
+                                "storageAccountType": "Standard_LRS",
+                                "id": "[resourceId('Microsoft.Compute/disks', parameters('disks_openshift_Data_name'))]"
+                            },
+                            "diskSizeGB": 256
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_openshift_name')]",
+                    "adminUsername": "[parameters('virtualMachines_openshift_name')]",
+					"adminPassword": "[parameters('virtualMachines_openshift_password')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false
+                    },
+                    "secrets": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_openshift852_name'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[concat('https', '://', parameters('storageAccounts_openshiftdiag345_name'), '.blob.core.windows.net', '/')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/disks', parameters('disks_openshift_Data_name'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_openshift852_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_openshiftdiag345_name'))]"
+            ]
+        },
+        {
+            "type": "microsoft.devtestlab/schedules",
+            "name": "[parameters('schedules_shutdown_computevm_openshift_name')]",
+            "apiVersion": "2016-05-15",
+            "location": "northeurope",
+            "scale": null,
+            "properties": {
+                "status": "Enabled",
+                "taskType": "ComputeVmShutdownTask",
+                "dailyRecurrence": {
+                    "time": "1900"
+                },
+                "timeZoneId": "FLE Standard Time",
+                "notificationSettings": {
+                    "status": "Disabled",
+                    "timeInMinutes": 30
+                },
+                "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_openshift_name'))]",
+                "provisioningState": "Succeeded",
+                "uniqueIdentifier": "5092dd24-25fb-453b-8d72-37dbb79f8892"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_openshift_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[parameters('networkInterfaces_openshift852_name')]",
+            "apiVersion": "2017-06-01",
+            "location": "northeurope",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "resourceGuid": "5691954d-3ecc-4568-ab67-3fbc5c9dc3ed",
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "etag": "W/\"6d31f5a2-9c70-4bfa-abe9-123f09f873ce\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "privateIPAddress": "10.0.0.4",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_openshift_ip_name'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_openshift_vnet_name'), parameters('subnets_default_name'))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": [],
+                    "appliedDnsServers": []
+                },
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_openshift_nsg_name'))]"
+                },
+                "primary": true,
+                "virtualMachine": {
+                    "id": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_openshift_name'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_openshift_ip_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_openshift_vnet_name'), parameters('subnets_default_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_openshift_nsg_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('networkSecurityGroups_openshift_nsg_name')]",
+            "apiVersion": "2017-06-01",
+            "location": "northeurope",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "resourceGuid": "2830c26b-a217-4119-9fef-f4055516bf36",
+                "securityRules": [
+                    {
+                        "name": "default-allow-ssh",
+                        "etag": "W/\"e2eae987-22fd-4b11-8d5c-dc9ca47ccae1\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound",
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "Openshift_Console_8443",
+                        "etag": "W/\"e2eae987-22fd-4b11-8d5c-dc9ca47ccae1\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1010,
+                            "direction": "Inbound",
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ],
+                "defaultSecurityRules": [
+                    {
+                        "name": "AllowVnetInBound",
+                        "etag": "W/\"e2eae987-22fd-4b11-8d5c-dc9ca47ccae1\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "description": "Allow inbound traffic from all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound",
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureLoadBalancerInBound",
+                        "etag": "W/\"e2eae987-22fd-4b11-8d5c-dc9ca47ccae1\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "description": "Allow inbound traffic from azure load balancer",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Inbound",
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "DenyAllInBound",
+                        "etag": "W/\"e2eae987-22fd-4b11-8d5c-dc9ca47ccae1\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "description": "Deny all inbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound",
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowVnetOutBound",
+                        "etag": "W/\"e2eae987-22fd-4b11-8d5c-dc9ca47ccae1\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound",
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowInternetOutBound",
+                        "etag": "W/\"e2eae987-22fd-4b11-8d5c-dc9ca47ccae1\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "description": "Allow outbound traffic from all VMs to Internet",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound",
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutBound",
+                        "etag": "W/\"e2eae987-22fd-4b11-8d5c-dc9ca47ccae1\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "description": "Deny all outbound traffic",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound",
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[parameters('publicIPAddresses_openshift_ip_name')]",
+            "apiVersion": "2017-06-01",
+            "location": "northeurope",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "resourceGuid": "1aaef1d6-53c7-4e40-a78b-607cc60f5784",
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4,
+                "dnsSettings": {
+                    "domainNameLabel": "pocopenshift",
+                    "fqdn": "pocopenshift.northeurope.cloudapp.azure.com"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetworks_openshift_vnet_name')]",
+            "apiVersion": "2017-06-01",
+            "location": "northeurope",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "resourceGuid": "378ea06e-46f9-4f3b-a05b-76ed9c3dd90d",
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/24"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "default",
+                        "etag": "W/\"0247c69d-a72a-4ece-b38c-a1218c7c1509\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "addressPrefix": "10.0.0.0/24"
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": []
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "name": "[parameters('storageAccounts_openshiftdiag345_name')]",
+            "apiVersion": "2016-01-01",
+            "location": "northeurope",
+            "tags": {},
+            "scale": null,
+            "properties": {},
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "name": "[concat(parameters('networkSecurityGroups_openshift_nsg_name'), '/', parameters('securityRules_default_allow_ssh_name'))]",
+            "apiVersion": "2017-06-01",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "protocol": "TCP",
+                "sourcePortRange": "*",
+                "destinationPortRange": "22",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1000,
+                "direction": "Inbound",
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_openshift_nsg_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "name": "[concat(parameters('networkSecurityGroups_openshift_nsg_name'), '/', parameters('securityRules_Openshift_Console_8443_name'))]",
+            "apiVersion": "2017-06-01",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "protocol": "*",
+                "sourcePortRange": "*",
+                "destinationPortRange": "8443",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1010,
+                "direction": "Inbound",
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_openshift_nsg_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "name": "[concat(parameters('virtualNetworks_openshift_vnet_name'), '/', parameters('subnets_default_name'))]",
+            "apiVersion": "2017-06-01",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "addressPrefix": "10.0.0.0/24"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_openshift_vnet_name'))]"
+            ]
+        }
+    ]
+}
