@@ -7,13 +7,13 @@ sudo su
 
 # Optional part - mounting 120 GB drive as /var/origin
 
-mkdir /var/origin
+mkdir /var/lib/origin
 
 parted -s -a optimal /dev/sdc mklabel gpt -- mkpart primary xfs 1 -1
 
 /sbin/mkfs -t xfs -f /dev/sdc1
 
-sudo echo "/dev/sdc1  /var/origin  xfs  defaults 0 0" >> /etc/fstab
+echo "/dev/sdc1  /var/lib/origin  xfs  defaults 0 0" >> /etc/fstab
 
 mount /dev/sdc1
 
@@ -22,6 +22,10 @@ mount /dev/sdc1
 yum -y install wget git net-tools bind-utils iptables-services bridge-utils bash-completion kexec-tools sos psacct
 
 yum -y update
+
+mkdir /var/lib/origin/docker
+
+ln -s /var/lib/origin/docker /var/lib/docker
 
 yum -y install docker-1.12.6
 
@@ -38,7 +42,7 @@ systemctl start docker
 
 # Download & configure
 
-cd /var/origin
+cd /var/lib/origin
 
 wget https://github.com/openshift/origin/releases/download/v3.6.0/openshift-origin-server-v3.6.0-c4dd4cf-linux-64bit.tar.gz
 
@@ -48,15 +52,15 @@ rm *.tar.gz
 
 mv openshift-origin-server-v3.6.0-c4dd4cf-linux-64bit bin
 
-export PATH=$(pwd):$PATH
+#export PATH=$(pwd):$PATH
 
-cd /var/origin/
+#cd /var/lib/origin/
 
-mkdir data
+mkdir /var/lib/origin/data
 
-cp /var/origin/bin/oc /usr/bin
+ln -s /var/lib/origin/bin/oc /usr/bin/oc
 
-cp /var/origin/bin/oadm /usr/bin
+ln -s /var/lib/origin/bin/oadm /usr/bin/oadm
  
 
 
