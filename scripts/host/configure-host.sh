@@ -54,5 +54,9 @@ cd /var/origin/
 
 mkdir data
 
+cp /var/origin/bin/oc /usr/bin
+
+cp /var/origin/bin/oadm /usr/bin
+ 
 
 
