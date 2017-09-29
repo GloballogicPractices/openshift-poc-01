@@ -12,15 +12,13 @@ try{
     node() {
 
         stage('build'){
-             openshiftBuild(buildConfig: '${NAMEPFX}-web-bc', showBuildLogs: 'true')
+             openshiftBuild(buildConfig: 'dotnet-core-app-web-bc', showBuildLogs: 'true')
         }
 
         stage('deploy') {
-            openshiftDeploy(deploymentConfig: '${NAMEPFX}-web-dc')
+            openshiftDeploy(deploymentConfig: 'dotnet-core-app-web-dc')
         }
     }
 } catch (Exception e) {
-    echo "send error mail to andriy.gnennyy@globallogic.com"
-    mail subject: "Build failed with ${e.message}", to: "andriy.gnennyy@globallogic.com", body: "Job failed: ${env.BUILD_URL} \n\n${e.stackTrace}"
     throw e;
 }
