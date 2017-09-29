@@ -22,7 +22,7 @@ def changesOnPath(pattern){
 				echo "  ${file.editType.name} ${file.path}"
 //				if (file.path ==~ check) {
 //					return true
-				}
+//				}
 			}
 		}
 	}
