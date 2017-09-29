@@ -152,7 +152,7 @@ objects:
       port: 8080
       targetPort: 8080
     selector:
-      name: ${NAMEPFX}
+      name: ${NAMEPFX}-web
 - apiVersion: v1
   kind: Route
   metadata:
