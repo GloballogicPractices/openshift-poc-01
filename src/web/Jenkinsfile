@@ -9,7 +9,7 @@ properties(
 )
 
 def changesOnPath(pattern){
-	def check = ~'${pattern}'
+//	def check = ~'${pattern}'
 	def changeLogSets = currentBuild.changeSets
 	for (int i = 0; i < changeLogSets.size(); i++) {
 		def entries = changeLogSets[i].items
@@ -20,8 +20,8 @@ def changesOnPath(pattern){
 			for (int k = 0; k < files.size(); k++) {
 				def file = files[k]
 				echo "  ${file.editType.name} ${file.path}"
-				if (file.path ==~ check) {
-					return true
+//				if (file.path ==~ check) {
+//					return true
 				}
 			}
 		}
