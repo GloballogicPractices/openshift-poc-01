@@ -4,12 +4,11 @@ properties(
             $class: 'BuildDiscarderProperty',
             strategy: [$class: 'LogRotator', numToKeepStr: '10']
         ],
-        //pipelineTriggers([cron('H/5 * * * *')]),
+        pipelineTriggers([cron('H/5 * * * *')]),
     ]
 )
 
 def changesOnPath(pattern){
-//	def check = ~'${pattern}'
 	def changeLogSets = currentBuild.changeSets
 	for (int i = 0; i < changeLogSets.size(); i++) {
 		def entries = changeLogSets[i].items
