@@ -9,22 +9,14 @@ properties(
 )
 
 try{
-    node('nodejs') {
+    node('any') {
 
-        stage('Checkout'){
-            checkout scm
-        }
-
-        stage('buildAndTest'){
-             sh "npm build"
-        }
-
-        stage('buildOnOpenShift'){
-             openshiftBuild(buildConfig: '${NAME}', showBuildLogs: 'true')
+        stage('build'){
+             openshiftBuild(buildConfig: '${NAMEPFX}-web-bc', showBuildLogs: 'true')
         }
 
         stage('deploy') {
-            openshiftDeploy(deploymentConfig: '${NAME}')
+            openshiftDeploy(deploymentConfig: '${NAMEPFX}-web-dc')
         }
     }
 } catch (Exception e) {
