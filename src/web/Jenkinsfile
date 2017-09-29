@@ -9,7 +9,7 @@ properties(
 )
 
 try{
-    node('any') {
+    node() {
 
         stage('build'){
              openshiftBuild(buildConfig: '${NAMEPFX}-web-bc', showBuildLogs: 'true')
