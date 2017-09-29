@@ -20,7 +20,7 @@ def changesOnPath(pattern){
 			for (int k = 0; k < files.size(); k++) {
 				def file = files[k]
 				echo "  ${file.editType.name} ${file.path}"
-				if (file.path ==~ 'src/web/') {
+				if (file.path ==~ 'src\/web\/') {
 					return true
 				}
 			}
