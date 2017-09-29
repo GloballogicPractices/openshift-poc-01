@@ -1,0 +1,347 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: app-template-dotnet-core-pipeline
+message: |-
+  Includes Jenkins (use OpenShift user credentials).
+metadata:
+  annotations:
+    description: |-
+      This example showcases several concepts: Jenkins Pipeline(s),
+      .Net Core microservices and corresponding OpenShift infrastructure to run CI\CD.
+    iconClass: icon-jenkins
+    tags: instant-app,jenkins
+  name: jenkins-pipeline-dotnet-core
+parameters:
+#--- / Updated ---
+#- description: The URL of the repository with your application source code.
+#  displayName: Git Repository URL
+#  name: SOURCE_REPOSITORY_URL
+#  required: true
+#  value: https://github.com/openshift/nodejs-ex.git
+#- displayName: Database Name
+#  name: DATABASE_NAME
+#  required: true
+#  value: sampledb
+#- description: Username for MongoDB user that will be used for accessing the database.
+#  displayName: MongoDB Username
+  # from: user[A-Z0-9]{3}
+  # generate: expression
+  # name: DATABASE_USER
+# - description: Password for the MongoDB user.
+  # displayName: MongoDB Password
+  # from: '[a-zA-Z0-9]{16}'
+  # generate: expression
+  # name: DATABASE_PASSWORD
+# - description: Maximum amount of memory the MongoDB container can use.
+  # displayName: Memory Limit (MongoDB)
+  # name: MEMORY_MONGODB_LIMIT
+  # required: true
+  # value: 512Mi
+# - displayName: Database Service Name
+  # name: DATABASE_SERVICE_NAME
+  # required: true
+  # value: mongodb
+# - description: Password for the database admin user.
+  # displayName: Database Administrator Password
+  # from: '[a-zA-Z0-9]{16}'
+  # generate: expression
+  # name: DATABASE_ADMIN_PASSWORD
+# - description: Set this to a branch name, tag or other ref of your repository if you
+    # are not using the default branch.
+  # displayName: Git Reference
+  # name: SOURCE_REPOSITORY_REF
+# - description: Set this to the relative path to your project if it is not in the root
+    # of your repository.
+  # displayName: Context Directory
+  # name: CONTEXT_DIR
+# - description: A secret string used to configure the GitHub webhook.
+  # displayName: GitHub Webhook Secret
+  # from: '[a-zA-Z0-9]{40}'
+  # generate: expression
+  # name: GITHUB_WEBHOOK_SECRET
+# - description: A secret string used to configure the Generic webhook.
+  # displayName: Generic Webhook Secret
+  # from: '[a-zA-Z0-9]{40}'
+  # generate: expression
+  # name: GENERIC_WEBHOOK_SECRET
+# - description: The custom NPM mirror URL
+  # displayName: Custom NPM Mirror URL
+  # name: NPM_MIRROR
+# - description: The OpenShift Namespace where the NodeJS and MongoDB ImageStreams reside.
+  # displayName: Namespace
+  # name: NAMESPACE
+  # required: true
+  # value: openshift
+
+# projects
+# - ci\cd
+# - stage
+# - prod
+  
+#--- Updated ---
+- description: Name prefix for various objects.
+  displayName: Name Prefix
+  name: NAMEPFX
+  required: true
+  value: dotnet-core-app
+- description: The hostname that will route to the ASP .Net Core website,
+    if left blank a value will be defaulted.
+  displayName: ASP .Net Core Application Hostname
+  name: APPLICATION_DOMAIN
+- description: Maximum amount of memory the ASP .Net Core container can use.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  required: true
+  value: 512Mi
+# - description: CI\CD (builder) project name.
+  # displayName: Builder Project
+  # name: CICDPROJ
+  # required: true
+  # value: dotnet-core-cicd
+# - description: Stage project name.
+  # displayName: Stage Project
+  # name: STAGEPROJ
+  # required: true
+  # value: dotnet-core-stage
+# - description: Prod project name.
+  # displayName: Prod Project
+  # name: PRODPROJ
+  # required: true
+  # value: dotnet-core-prod
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      pipeline.alpha.openshift.io/uses: '[{"name": "${NAMEPFX}-web-dc", "namespace": "", "kind": "DeploymentConfig"}]'
+    labels:
+      name: ${NAMEPFX}-web-pipeline
+      app: ${NAMEPFX}
+    name: ${NAMEPFX}-web-pipeline
+  spec:
+    source:
+      git:
+        ref: master
+        uri: https://github.com/andriy-gnennyy-gl/openshift-poc-01.git
+      type: Git
+    strategy:
+      jenkinsPipelineStrategy:
+        jenkinsfilePath: src/web/Jenkinsfile
+      type: JenkinsPipeline
+# TODO - review
+    triggers:
+    - github:
+        secret: secret101
+      type: GitHub
+    - generic:
+        secret: secret101
+      type: Generic
+# /TODO - review
+- apiVersion: v1
+  kind: Service
+  metadata:
+#    annotations:
+#      service.alpha.openshift.io/dependencies: '[{"name": "${DATABASE_SERVICE_NAME}", "namespace": "", "kind": "Service"}]'
+    name: ${NAMEPFX}-web-svc
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+    selector:
+      name: ${NAMEPFX}
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAMEPFX}-web-rt
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    to:
+      kind: Service
+      name: ${NAMEPFX}-web-svc
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the Web application image
+    name: ${NAMEPFX}-web-img
+    labels:
+      app: ${NAMEPFX}
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the Web application
+    name: ${NAMEPFX}-web-bc
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${NAMEPFX}-web-img:latest
+    postCommit:
+      script: npm test
+    source:
+      contextDir: src/web
+      git:
+        ref: 
+        uri: https://github.com/andriy-gnennyy-gl/openshift-poc-01.git
+      type: Git
+    strategy:
+      sourceStrategy:
+#       env:
+#       - name: NPM_MIRROR
+#         value: ${NPM_MIRROR}
+        from:
+          kind: DockerImage
+          name: registry.access.redhat.com/dotnet/dotnet-20-rhel7:2.0 
+      type: Source
+    triggers:
+    - github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+    - generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+      type: Generic
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: Defines how to deploy the Web application
+    name: ${NAMEPFX}-web-dc
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    replicas: 1
+    selector:
+      name: ${NAMEPFX}-web
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: ${NAMEPFX}-web
+          app: ${NAMEPFX}
+        name: ${NAMEPFX}-web
+      spec:
+        containers:
+        - env:
+          - name: FAKE
+            value: ' '
+          image: ' '
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+          name: ${NAMEPFX}-web
+          ports:
+          - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            timeoutSeconds: 3
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+    triggers:
+    - imageChangeParams:
+        automatic: false
+        containerNames:
+        - ${NAMEPFX}-web
+        from:
+          kind: ImageStreamTag
+          name: ${NAMEPFX}-web-img:latest
+      type: ImageChange
+    - type: ConfigChange
+#- apiVersion: v1
+#  kind: Service
+#  metadata:
+#    annotations:
+#      description: Exposes the database server
+#    name: ${DATABASE_SERVICE_NAME}
+#  spec:
+#    ports:
+#    - name: mongodb
+#      port: 27017
+#      targetPort: 27017
+#    selector:
+#      name: ${DATABASE_SERVICE_NAME}
+#
+#- apiVersion: v1
+#  kind: DeploymentConfig
+#  metadata:
+#    annotations:
+#      description: Defines how to deploy the database
+#    name: ${DATABASE_SERVICE_NAME}
+#  spec:
+#    replicas: 1
+#    selector:
+#      name: ${DATABASE_SERVICE_NAME}
+#    strategy:
+#      type: Recreate
+#    template:
+#      metadata:
+#        labels:
+#          name: ${DATABASE_SERVICE_NAME}
+#        name: ${DATABASE_SERVICE_NAME}
+#      spec:
+#        containers:
+#        - env:
+#          - name: MONGODB_USER
+#            value: ${DATABASE_USER}
+#          - name: MONGODB_PASSWORD
+#            value: ${DATABASE_PASSWORD}
+#          - name: MONGODB_DATABASE
+#            value: ${DATABASE_NAME}
+#          - name: MONGODB_ADMIN_PASSWORD
+#            value: ${DATABASE_ADMIN_PASSWORD}
+#          image: ' '
+#          livenessProbe:
+#            initialDelaySeconds: 30
+#            tcpSocket:
+#              port: 27017
+#            timeoutSeconds: 1
+#          name: mongodb
+#          ports:
+#          - containerPort: 27017
+#          readinessProbe:
+#            exec:
+#              command:
+#              - /bin/sh
+#              - -i
+#              - -c
+#              - mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD
+#                --eval="quit()"
+#            initialDelaySeconds: 3
+#            timeoutSeconds: 1
+#          resources:
+#            limits:
+#              memory: ${MEMORY_MONGODB_LIMIT}
+#          volumeMounts:
+#          - mountPath: /var/lib/mongodb/data
+#            name: ${DATABASE_SERVICE_NAME}-data
+#        volumes:
+#        - emptyDir:
+#            medium: ""
+#          name: ${DATABASE_SERVICE_NAME}-data
+#    triggers:
+#    - imageChangeParams:
+#        automatic: true
+#        containerNames:
+#        - mongodb
+#        from:
+#          kind: ImageStreamTag
+#          name: mongodb:3.2
+#          namespace: ${NAMESPACE}
+#      type: ImageChange
+#    - type: ConfigChange
