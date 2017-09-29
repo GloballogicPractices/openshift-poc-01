@@ -9,18 +9,16 @@ properties(
 )
 
 def changesOnPath(){
-	return false
+	return true
 }
 
 
 try{
     node {
-        stage('checkout'){
-            if (!changesOnPath()){
-				currentBuild.result = 'SUCCESS'
-				return
-			}			
-        }
+		if (!changesOnPath()){
+			currentBuild.result = 'SUCCESS'
+			return
+		}
 
         stage('build'){
              openshiftBuild(buildConfig: 'dotnet-core-app-web-bc', showBuildLogs: 'true')			 
