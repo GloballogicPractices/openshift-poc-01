@@ -190,7 +190,7 @@ objects:
     source:
       contextDir: src/web
       git:
-        ref: 
+        ref: master
         uri: https://github.com/andriy-gnennyy-gl/openshift-poc-01.git
       type: Git
     strategy:

@@ -1,0 +1,34 @@
+properties(
+    [
+        [
+            $class: 'BuildDiscarderProperty',
+            strategy: [$class: 'LogRotator', numToKeepStr: '10']
+        ],
+        pipelineTriggers([cron('H/5 * * * *')]),
+    ]
+)
+
+try{
+    node('nodejs') {
+
+        stage('Checkout'){
+            checkout scm
+        }
+
+        stage('buildAndTest'){
+             sh "npm build"
+        }
+
+        stage('buildOnOpenShift'){
+             openshiftBuild(buildConfig: '${NAME}', showBuildLogs: 'true')
+        }
+
+        stage('deploy') {
+            openshiftDeploy(deploymentConfig: '${NAME}')
+        }
+    }
+} catch (Exception e) {
+    echo "send error mail to andriy.gnennyy@globallogic.com"
+    mail subject: "Build failed with ${e.message}", to: "andriy.gnennyy@globallogic.com", body: "Job failed: ${env.BUILD_URL} \n\n${e.stackTrace}"
+    throw e;
+}
