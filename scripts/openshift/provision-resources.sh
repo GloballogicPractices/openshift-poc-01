@@ -3,6 +3,16 @@
 # Prvisioning script to deploy the PoC on an OpenShift environment             #
 ################################################################################
 
+# TODO
+# 1. Create 3 projects (ci\cd, dev, prod)
+# 2. Setup permissions between projects
+# 3. Split templates into 3 parts (ci\cd, stage, prod)
+# 4. deploy templates to corresponding projects
+# 5. configure and test stage-> prod propagation
+# 6. add 2 back-end microservices, configure builds/pipelines
+# 7. update Web app to call microservices
+# 8. create multi-node cluster
+
 function print_header() {
   echo
   echo "-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/"
@@ -14,17 +24,19 @@ function print_header() {
 function create_projects() {
   print_header "Creating OpenShift projects..."
 
-  echo "Creating project $PRJ_CI"
-  oc new-project $PRJ_CI --display-name='CI/CD' --description='CI/CD Subsystem (Jenkins, Nexus, etc)' >/dev/null
+  echo "Creating projects $PRJ_CI"
+  oc new-project $PRJ_CI --display-name='CI/CD' --description='CI/CD Subsystem (Jenkins, pipelines, builds, images, etc)' >/dev/null
+  oc new-project $PRJ_DEV --display-name='Development' --description='Development (Dev deployment)' >/dev/null
+  oc new-project $PRJ_PROD --display-name='Production' --description='Production (Prod deployment)' >/dev/null
   
-  for project in $PRJ_CI
+  for project in $PRJ_CI $PRJ_DEV $PRJ_PROD
   do
     oc adm policy add-role-to-group admin system:serviceaccounts:$PRJ_CI -n $project
     oc adm policy add-role-to-group admin system:serviceaccounts:$project -n $project
   done
 
   if [ $LOGGEDIN_USER == 'system:admin' ] ; then
-    for project in $PRJ_CI
+    for project in $PRJ_CI $PRJ_DEV $PRJ_PROD
     do
       oc adm policy add-role-to-user admin $ARG_USERNAME -n $project
       oc annotate --overwrite namespace $project demo=demo1-$PRJ_SUFFIX demo=demo-modern-arch-$PRJ_SUFFIX
@@ -35,6 +47,8 @@ function create_projects() {
 
 # Create Projects (in reversed order)
 function delete_projects() {
+  oc delete project $PRJ_PROD
+  oc delete project $PRJ_DEV
   oc delete project $PRJ_CI
 }
 
@@ -56,7 +70,7 @@ function set_default_project() {
 
 ARG_USERNAME=
 ARG_COMMAND=deploy
-ARG_PROJECT_SUFFIX=
+ARG_PROJECT_SUFFIX=dotnet-core
 
 while :; do
     case $1 in
@@ -108,6 +122,8 @@ OPENSHIFT_USER=${ARG_USERNAME:-$LOGGEDIN_USER}
 # projects
 PRJ_SUFFIX=${ARG_PROJECT_SUFFIX:-`echo $OPENSHIFT_USER | sed -e 's/[-@].*//g'`}
 PRJ_CI=ci-$PRJ_SUFFIX
+PRJ_DEV=dev-$PRJ_SUFFIX
+PRJ_PROD=prod-$PRJ_SUFFIX
 
 # config
 GITHUB_ACCOUNT=${GITHUB_ACCOUNT:-andriy-gnennyy-gl}
