@@ -28,9 +28,12 @@ def changesOnPath(pattern){
 	return false
 }
 
+def project=""
 
 try{
 	node {
+		project = env.PROJECT_NAME
+	
 		if (!changesOnPath('src/web/.*')){
 			currentBuild.result = 'SUCCESS'
 			return
@@ -38,12 +41,12 @@ try{
 
 		stage('build'){
 			milestone()
-			openshiftBuild(buildConfig: "${env.BUILD_CONFIG_NAME}", showBuildLogs: 'true')
+			openshiftBuild(buildConfig: "${project}-web-bc", showBuildLogs: 'true')
 		}
 
 		stage('deploy') {
 			milestone()
-			openshiftDeploy(deploymentConfig: "${env.DEPLOY_CONFIG_NAME}", namespace: "${env.DEPLOY_CONFIG_NAMESPACE}")
+			openshiftDeploy(deploymentConfig: "${project}-web-dc", namespace: "${project}-dev")
 		}
 	}
 } catch (Exception e) {
