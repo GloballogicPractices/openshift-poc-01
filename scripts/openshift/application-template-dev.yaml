@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: app-template-dotnet-core-dev
+message: |-
+  Includes Dev instance of the services and corresponding deployment configs.
+metadata:
+  annotations:
+    description: |-
+      This example showcases several concepts: Jenkins Pipeline(s),
+      .Net Core microservices and corresponding OpenShift infrastructure to run CI\CD.
+    iconClass: icon-jenkins
+    tags: instant-app,jenkins
+  name: dotnet-core-dev
+parameters:
+- description: Name prefix for various objects.
+  displayName: Name Prefix
+  name: NAMEPFX
+  required: true
+  value: dotnet-core
+- description: The hostname that will route to the ASP .Net Core website,
+    if left blank a value will be defaulted.
+  displayName: ASP .Net Core Application Hostname
+  name: APPLICATION_DOMAIN
+- description: Maximum amount of memory the ASP .Net Core container can use.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  required: true
+  value: 512Mi
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+#    annotations:
+#      service.alpha.openshift.io/dependencies: '[{"name": "${DATABASE_SERVICE_NAME}", "namespace": "", "kind": "Service"}]'
+    name: ${NAMEPFX}-web-svc
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+    selector:
+      name: ${NAMEPFX}-web
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAMEPFX}-web-rt
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    to:
+      kind: Service
+      name: ${NAMEPFX}-web-svc
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: Defines how to deploy the Web application
+    name: ${NAMEPFX}-web-dc
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    replicas: 1
+    selector:
+      name: ${NAMEPFX}-web
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: ${NAMEPFX}-web
+          app: ${NAMEPFX}
+        name: ${NAMEPFX}-web
+      spec:
+        containers:
+        - env:
+          - name: FAKE
+            value: ' '
+          image: ' '
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+          name: ${NAMEPFX}-web
+          ports:
+          - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            timeoutSeconds: 3
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+    triggers:
+    - imageChangeParams:
+        automatic: false
+        containerNames:
+        - ${NAMEPFX}-web
+        from:
+          kind: ImageStreamTag
+          name: ${NAMEPFX}/${NAMEPFX}-web-img:latest
+      type: ImageChange
+    - type: ConfigChange
