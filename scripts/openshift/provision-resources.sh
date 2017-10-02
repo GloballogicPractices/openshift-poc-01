@@ -20,6 +20,23 @@ function print_header() {
   echo "-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/"
 }
 
+function wait_service(name, namespace) {
+  i=1
+  oc get ep $name -o yaml -n $namespace | grep "\- addresses:"
+  while [ ! $? -eq 0 ]
+  do
+    sleep 60
+    i=$(( $i + 1 ))
+
+    if [ $i -gt 10 ]
+    then
+      exit 255
+    fi
+
+    oc get ep $name -o yaml -n $namespace | grep "\- addresses:"
+done
+}
+
 # Create Projects
 function create_projects() {
   print_header "Creating OpenShift projects..."
@@ -156,6 +173,7 @@ case "$ARG_COMMAND" in
         #deploy_guides
         #deploy_gogs
         deploy_jenkins
+		wait_service("jenkins", $PRJ_CI)
         #add_inventory_template_to_projects
         #deploy_coolstore_test_env
         #deploy_coolstore_prod_env
