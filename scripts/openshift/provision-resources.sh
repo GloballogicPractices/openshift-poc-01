@@ -92,6 +92,12 @@ function deploy_dev_objects() {
   oc new-app -n $PRJ_DEV -f $GITHUB_RAW_URI/scripts/openshift/application-template-dev.yaml
 }
 
+function deploy_prod_objects() {
+  print_header "Deploying Prod opjects..."
+  
+  oc new-app -n $PRJ_PROD -f $GITHUB_RAW_URI/scripts/openshift/application-template-prod.yaml
+}
+
 # GPTE convention
 function set_default_project() {
   if [ $LOGGEDIN_USER == 'system:admin' ] ; then
@@ -184,6 +190,7 @@ case "$ARG_COMMAND" in
         create_projects 
         deploy_jenkins
 		wait_service "jenkins" $PRJ_CI
+		deploy_prod_objects
 		deploy_dev_objects
 		deploy_cicd_objects
 esac

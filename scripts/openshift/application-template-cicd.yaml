@@ -25,9 +25,9 @@ objects:
     annotations:
       pipeline.alpha.openshift.io/uses: '[{"name": "${NAMEPFX}-web-dc", "namespace": "${NAMEPFX}-dev", "kind": "DeploymentConfig"}]'
     labels:
-      name: ${NAMEPFX}-web-pipeline
+      name: ${NAMEPFX}-web-DEV
       app: ${NAMEPFX}
-    name: ${NAMEPFX}-web-pipeline
+    name: ${NAMEPFX}-web-DEV
   spec:
     source:
       git:
@@ -36,7 +36,35 @@ objects:
       type: Git
     strategy:
       jenkinsPipelineStrategy:
-        jenkinsfilePath: src/web/Jenkinsfile      
+        jenkinsfilePath: src/web/Jenkinsfile
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      pipeline.alpha.openshift.io/uses: '[{"name": "${NAMEPFX}-web-dc", "namespace": "${NAMEPFX}-prod", "kind": "DeploymentConfig"}]'
+    labels:
+      name: ${NAMEPFX}-web-PROD
+      app: ${NAMEPFX}
+    name: ${NAMEPFX}-web-PROD
+  spec:
+    strategy:
+      jenkinsPipelineStrategy:
+        jenkinsfile: |-
+        try {
+          def project=""
+          node {
+            project = env.PROJECT_NAME
+            stage("Promote") {
+              milestone()
+              openshiftTag(namespace: "${NAMEPFX}-dev", sourceStream: "${NAMEPFX}-web-img", sourceTag: 'latest', destinationNamespace: "${NAMEPFX}-dev", destinationStream: "${NAMEPFX}-web-img", destinationTag: 'latest')
+            }
+          }
+        } catch (err) {
+           echo "Caught: ${err}"
+           currentBuild.result = 'FAILURE'
+           throw err
+        }
+      type: JenkinsPipeline
 - apiVersion: v1
   kind: BuildConfig
   metadata:
