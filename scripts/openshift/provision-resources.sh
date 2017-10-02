@@ -81,9 +81,15 @@ function deploy_jenkins() {
 }
 
 function deploy_cicd_objects() {
-  print_header "Deploying CI\CD opjects..."
+  print_header "Deploying CI\CD objects..."
   
   oc new-app -n $PRJ_CI -f $GITHUB_RAW_URI/scripts/openshift/application-template-cicd.yaml
+}
+
+function deploy_dev_objects() {
+  print_header "Deploying Dev opjects..."
+  
+  oc new-app -n $PRJ_DEV -f $GITHUB_RAW_URI/scripts/openshift/application-template-dev.yaml
 }
 
 # GPTE convention
