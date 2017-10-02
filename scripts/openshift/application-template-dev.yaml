@@ -29,6 +29,14 @@ parameters:
   value: 512Mi
 objects:
 - apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the Web application image
+    name: ${NAMEPFX}-web-img
+    labels:
+      app: ${NAMEPFX}
+- apiVersion: v1
   kind: Service
   metadata:
 #    annotations:
@@ -106,6 +114,6 @@ objects:
         from:
           kind: ImageStreamTag
           name: ${NAMEPFX}-web-img:latest
-          namespace: ${NAMEPFX}
+          namespace: ${NAMEPFX}-dev
       type: ImageChange
     - type: ConfigChange

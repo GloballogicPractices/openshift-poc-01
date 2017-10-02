@@ -184,13 +184,8 @@ case "$ARG_COMMAND" in
         create_projects 
         deploy_jenkins
 		wait_service "jenkins" $PRJ_CI
+		deploy_dev_objects
 		deploy_cicd_objects
-        #add_inventory_template_to_projects
-        #deploy_coolstore_test_env
-        #deploy_coolstore_prod_env
-        #deploy_inventory_dev_env
-        #promote_images
-        #deploy_pipeline
 esac
 
 set_default_project
