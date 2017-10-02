@@ -44,9 +44,9 @@ function create_projects() {
   print_header "Creating OpenShift projects..."
 
   echo "Creating projects $PRJ_CI"
-  oc new-project $PRJ_CI --display-name='CI/CD' --description='CI/CD Subsystem (Jenkins, pipelines, builds, images, etc)' >/dev/null
-  oc new-project $PRJ_DEV --display-name='Development' --description='Development (Dev deployment)' >/dev/null
-  oc new-project $PRJ_PROD --display-name='Production' --description='Production (Prod deployment)' >/dev/null
+  oc new-project $PRJ_CI --display-name='Asp .Net Core CI/CD' --description='CI/CD Subsystem (Jenkins, pipelines, builds)' >/dev/null
+  oc new-project $PRJ_DEV --display-name='Asp .Net Core Development' --description='Development environment (Dev instance, deployments, images)' >/dev/null
+  oc new-project $PRJ_PROD --display-name='Asp .Net Core Production' --description='Production environment (Prod instance, deployments, images)' >/dev/null
   
   for project in $PRJ_CI $PRJ_DEV $PRJ_PROD
   do
