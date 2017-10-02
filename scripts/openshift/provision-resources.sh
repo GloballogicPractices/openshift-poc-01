@@ -20,9 +20,9 @@ function print_header() {
   echo "-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/"
 }
 
-function wait_service(name, namespace) {
+function wait_service() {
   i=1
-  oc get ep $name -o yaml -n $namespace | grep "\- addresses:"
+  oc get ep $1 -o yaml -n $2 | grep "\- addresses:"
   while [ ! $? -eq 0 ]
   do
     sleep 60
@@ -33,7 +33,7 @@ function wait_service(name, namespace) {
       exit 255
     fi
 
-    oc get ep $name -o yaml -n $namespace | grep "\- addresses:"
+    oc get ep $1 -o yaml -n $2 | grep "\- addresses:"
 done
 }
 
@@ -173,7 +173,7 @@ case "$ARG_COMMAND" in
         #deploy_guides
         #deploy_gogs
         deploy_jenkins
-		wait_service("jenkins", $PRJ_CI)
+		wait_service "jenkins" $PRJ_CI
         #add_inventory_template_to_projects
         #deploy_coolstore_test_env
         #deploy_coolstore_prod_env
