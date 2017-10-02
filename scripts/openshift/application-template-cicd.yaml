@@ -50,20 +50,20 @@ objects:
     strategy:
       jenkinsPipelineStrategy:
         jenkinsfile: |-
-        try {
-          def project=""
-          node {
-            project = env.PROJECT_NAME
-            stage("Promote") {
-              milestone()
-              openshiftTag(namespace: "${NAMEPFX}-dev", sourceStream: "${NAMEPFX}-web-img", sourceTag: 'latest', destinationNamespace: "${NAMEPFX}-dev", destinationStream: "${NAMEPFX}-web-img", destinationTag: 'latest')
+          try {
+            def project=""
+            node {
+              project = env.PROJECT_NAME
+              stage("Promote") {
+                milestone()
+                openshiftTag(namespace: "${NAMEPFX}-dev", sourceStream: "${NAMEPFX}-web-img", sourceTag: 'latest', destinationNamespace: "${NAMEPFX}-dev", destinationStream: "${NAMEPFX}-web-img", destinationTag: 'latest')
+              }
             }
+          } catch (err) {
+             echo "Caught: ${err}"
+             currentBuild.result = 'FAILURE'
+             throw err
           }
-        } catch (err) {
-           echo "Caught: ${err}"
-           currentBuild.result = 'FAILURE'
-           throw err
-        }
       type: JenkinsPipeline
 - apiVersion: v1
   kind: BuildConfig
