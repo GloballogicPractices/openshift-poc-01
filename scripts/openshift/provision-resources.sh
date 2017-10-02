@@ -4,8 +4,8 @@
 ################################################################################
 
 # TODO
-# 1. Create 3 projects (ci\cd, dev, prod)
-# 2. Setup permissions between projects
+# +1. Create 3 projects (ci\cd, dev, prod)
+# +2. Setup permissions between projects
 # 3. Split templates into 3 parts (ci\cd, stage, prod)
 # 4. deploy templates to corresponding projects
 # 5. configure and test stage-> prod propagation
