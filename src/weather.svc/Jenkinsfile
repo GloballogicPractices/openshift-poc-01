@@ -1,0 +1,57 @@
+//properties(
+//	[
+//		[
+//			$class: 'BuildDiscarderProperty',
+//			strategy: [$class: 'LogRotator', numToKeepStr: '10']
+//		],
+//		pipelineTriggers([cron('H/5 * * * *')]),
+//	]
+//)
+
+def changesOnPath(pattern){
+	def changeLogSets = currentBuild.changeSets
+	if (changeLogSets.size() == 0) {
+		return true;
+	}
+	for (int i = 0; i < changeLogSets.size(); i++) {
+		def entries = changeLogSets[i].items
+		for (int j = 0; j < entries.length; j++) {
+			def entry = entries[j]
+			echo "${entry.commitId} by ${entry.author} on ${new Date(entry.timestamp)}: ${entry.msg}"
+			def files = new ArrayList(entry.affectedFiles)
+			for (int k = 0; k < files.size(); k++) {
+				def file = files[k]
+				echo "	${file.editType.name} ${file.path}"
+				if (file.path ==~ pattern) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+def project=""
+
+try{
+	node {
+		project = env.PROJECT_NAME
+	
+		if (!changesOnPath('src/weather.+svc/.*')){
+			currentBuild.result = 'SUCCESS'
+			return
+		}
+
+		stage('build'){
+			milestone()
+			openshiftBuild(buildConfig: "${project}-weather-bc", showBuildLogs: 'true')
+		}
+
+		stage('deploy') {
+			milestone()
+			openshiftDeploy(deploymentConfig: "${project}-weather-dc", namespace: "${project}-dev")
+		}
+	}
+} catch (Exception e) {
+	throw e;
+}

@@ -12,6 +12,7 @@ metadata:
     iconClass: icon-jenkins
     tags: instant-app,jenkins
   name: dotnet-core-dev
+#------------------------------------------------------------------------------
 parameters:
 - description: Name prefix for various objects.
   displayName: Name Prefix
@@ -27,6 +28,7 @@ parameters:
   name: MEMORY_LIMIT
   required: true
   value: 512Mi
+#------------------------------------------------------------------------------
 objects:
 - apiVersion: v1
   kind: ImageStream
@@ -36,6 +38,15 @@ objects:
     name: ${NAMEPFX}-web-img
     labels:
       app: ${NAMEPFX}
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the Weather service image
+    name: ${NAMEPFX}-weather-img
+    labels:
+      app: ${NAMEPFX}
+#------------------------------------------------------------------------------
 - apiVersion: v1
   kind: Service
   metadata:
@@ -52,6 +63,22 @@ objects:
     selector:
       name: ${NAMEPFX}-web
 - apiVersion: v1
+  kind: Service
+  metadata:
+#    annotations:
+#      service.alpha.openshift.io/dependencies: '[{"name": "${DATABASE_SERVICE_NAME}", "namespace": "", "kind": "Service"}]'
+    name: ${NAMEPFX}-weather-svc
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+    selector:
+      name: ${NAMEPFX}-weather
+#------------------------------------------------------------------------------
+- apiVersion: v1
   kind: Route
   metadata:
     name: ${NAMEPFX}-web-rt
@@ -62,6 +89,18 @@ objects:
     to:
       kind: Service
       name: ${NAMEPFX}-web-svc
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAMEPFX}-weather-rt
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    to:
+      kind: Service
+      name: ${NAMEPFX}-weather-svc
+#------------------------------------------------------------------------------
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
@@ -114,6 +153,61 @@ objects:
         from:
           kind: ImageStreamTag
           name: ${NAMEPFX}-web-img:latest
+          namespace: ${NAMEPFX}-dev
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: Defines how to deploy the Weather service
+    name: ${NAMEPFX}-weather-dc
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    replicas: 1
+    selector:
+      name: ${NAMEPFX}-weather
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: ${NAMEPFX}-weather
+          app: ${NAMEPFX}
+        name: ${NAMEPFX}-weather
+      spec:
+        containers:
+        - env:
+          - name: FAKE
+            value: ' '
+          image: ' '
+          livenessProbe:
+            httpGet:
+              path: /api/values
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+          name: ${NAMEPFX}-weather
+          ports:
+          - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /api/values
+              port: 8080
+            initialDelaySeconds: 3
+            timeoutSeconds: 3
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+    triggers:
+    - imageChangeParams:
+        automatic: false
+        containerNames:
+        - ${NAMEPFX}-weather
+        from:
+          kind: ImageStreamTag
+          name: ${NAMEPFX}-weather-img:latest
           namespace: ${NAMEPFX}-dev
       type: ImageChange
     - type: ConfigChange

@@ -12,12 +12,14 @@ metadata:
     iconClass: icon-jenkins
     tags: instant-app,jenkins
   name: dotnet-core
+#------------------------------------------------------------------------------
 parameters:
 - description: Name prefix for various objects.
   displayName: Name Prefix
   name: NAMEPFX
   required: true
   value: dotnet-core
+#------------------------------------------------------------------------------
 objects:
 - apiVersion: v1
   kind: BuildConfig
@@ -37,6 +39,25 @@ objects:
     strategy:
       jenkinsPipelineStrategy:
         jenkinsfilePath: src/web/Jenkinsfile
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      pipeline.alpha.openshift.io/uses: '[{"name": "${NAMEPFX}-weather-dc", "namespace": "${NAMEPFX}-dev", "kind": "DeploymentConfig"}]'
+    labels:
+      name: ${NAMEPFX}-weather-dev
+      app: ${NAMEPFX}
+    name: ${NAMEPFX}-weather-dev
+  spec:
+    source:
+      git:
+        ref: master
+        uri: https://github.com/andriy-gnennyy-gl/openshift-poc-01.git
+      type: Git
+    strategy:
+      jenkinsPipelineStrategy:
+        jenkinsfilePath: src/weather.svc/Jenkinsfile
+#------------------------------------------------------------------------------
 - apiVersion: v1
   kind: BuildConfig
   metadata:
@@ -69,6 +90,35 @@ objects:
   kind: BuildConfig
   metadata:
     annotations:
+      pipeline.alpha.openshift.io/uses: '[{"name": "${NAMEPFX}-weather-dc", "namespace": "${NAMEPFX}-prod", "kind": "DeploymentConfig"}]'
+    labels:
+      name: ${NAMEPFX}-weather-prod
+      app: ${NAMEPFX}
+    name: ${NAMEPFX}-weather-prod
+  spec:
+    strategy:
+      jenkinsPipelineStrategy:
+        jenkinsfile: |-
+          try {
+            def project=""
+            node {
+              project = env.PROJECT_NAME
+              stage("Dev -> Prod") {
+                milestone()
+                openshiftTag(namespace: "${NAMEPFX}-dev", sourceStream: "${NAMEPFX}-weather-img", sourceTag: 'latest', destinationNamespace: "${NAMEPFX}-prod", destinationStream: "${NAMEPFX}-weather-img", destinationTag: 'latest')
+              }
+            }
+          } catch (err) {
+             echo "Caught: ${err}"
+             currentBuild.result = 'FAILURE'
+             throw err
+          }
+      type: JenkinsPipeline
+#------------------------------------------------------------------------------
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
       description: Defines how to build the Web application
     name: ${NAMEPFX}-web-bc
     labels:
@@ -83,6 +133,41 @@ objects:
       script: npm test
     source:
       contextDir: src/web
+      git:
+        ref: master
+        uri: https://github.com/andriy-gnennyy-gl/openshift-poc-01.git
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: DockerImage
+          name: registry.access.redhat.com/dotnet/dotnet-20-rhel7:2.0 
+      type: Source
+    triggers:
+    - github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+    - generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+      type: Generic
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the Weather service
+    name: ${NAMEPFX}-weather-bc
+    labels:
+      app: ${NAMEPFX}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${NAMEPFX}-weather-img:latest
+        namespace: ${NAMEPFX}-dev
+    postCommit:
+      script: npm test
+    source:
+      contextDir: src/weather.svc
       git:
         ref: master
         uri: https://github.com/andriy-gnennyy-gl/openshift-poc-01.git
