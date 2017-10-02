@@ -54,7 +54,7 @@ objects:
             def project=""
             node {
               project = env.PROJECT_NAME
-              stage("Promote") {
+              stage("Dev -> Prod") {
                 milestone()
                 openshiftTag(namespace: "${NAMEPFX}-dev", sourceStream: "${NAMEPFX}-web-img", sourceTag: 'latest', destinationNamespace: "${NAMEPFX}-dev", destinationStream: "${NAMEPFX}-web-img", destinationTag: 'latest')
               }
