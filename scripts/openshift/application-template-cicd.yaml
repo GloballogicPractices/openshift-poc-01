@@ -25,9 +25,9 @@ objects:
     annotations:
       pipeline.alpha.openshift.io/uses: '[{"name": "${NAMEPFX}-web-dc", "namespace": "${NAMEPFX}-dev", "kind": "DeploymentConfig"}]'
     labels:
-      name: ${NAMEPFX}-web-DEV
+      name: ${NAMEPFX}-web-dev
       app: ${NAMEPFX}
-    name: ${NAMEPFX}-web-DEV
+    name: ${NAMEPFX}-web-dev
   spec:
     source:
       git:
@@ -43,9 +43,9 @@ objects:
     annotations:
       pipeline.alpha.openshift.io/uses: '[{"name": "${NAMEPFX}-web-dc", "namespace": "${NAMEPFX}-prod", "kind": "DeploymentConfig"}]'
     labels:
-      name: ${NAMEPFX}-web-PROD
+      name: ${NAMEPFX}-web-prod
       app: ${NAMEPFX}
-    name: ${NAMEPFX}-web-PROD
+    name: ${NAMEPFX}-web-prod
   spec:
     strategy:
       jenkinsPipelineStrategy:
