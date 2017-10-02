@@ -27,14 +27,14 @@ function wait_service() {
   oc get ep $1 -o yaml -n $2 | grep "\- addresses:"
   while [ ! $? -eq 0 ]
   do
-    sleep 60
+    sleep 10
     i=$(( $i + 1 ))
 
-    if [ $i -gt 10 ]
+    if [ $i -gt 60 ]
     then
       exit 255
     fi
-
+    echo "."
     oc get ep $1 -o yaml -n $2 | grep "\- addresses:"
 done
 }
