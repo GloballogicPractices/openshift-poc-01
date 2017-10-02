@@ -6,9 +6,9 @@
 # TODO
 # +1. Create 3 projects (ci\cd, dev, prod)
 # +2. Setup permissions between projects
-# 3. Split templates into 3 parts (ci\cd, stage, prod)
-# 4. deploy templates to corresponding projects
-# 5. configure and test stage-> prod propagation
+# +3. Split templates into 3 parts (ci\cd, stage, prod)
+# +4. deploy templates to corresponding projects
+# +5. configure and test stage-> prod propagation
 # 6. add 2 back-end microservices, configure builds/pipelines
 # 7. update Web app to call microservices
 # 8. create multi-node cluster
