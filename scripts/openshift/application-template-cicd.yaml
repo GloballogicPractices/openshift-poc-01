@@ -56,7 +56,7 @@ objects:
               project = env.PROJECT_NAME
               stage("Dev -> Prod") {
                 milestone()
-                openshiftTag(namespace: "${NAMEPFX}-dev", sourceStream: "${NAMEPFX}-web-img", sourceTag: 'latest', destinationNamespace: "${NAMEPFX}-dev", destinationStream: "${NAMEPFX}-web-img", destinationTag: 'latest')
+                openshiftTag(namespace: "${NAMEPFX}-dev", sourceStream: "${NAMEPFX}-web-img", sourceTag: 'latest', destinationNamespace: "${NAMEPFX}-prod", destinationStream: "${NAMEPFX}-web-img", destinationTag: 'latest')
               }
             }
           } catch (err) {
