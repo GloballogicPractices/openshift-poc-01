@@ -105,6 +105,6 @@ objects:
         - ${NAMEPFX}-web
         from:
           kind: ImageStreamTag
-          name: ${NAMEPFX}/${NAMEPFX}-web-img:latest
+          name: ${NAMEPFX}-web-img:latest
       type: ImageChange
     - type: ConfigChange
