@@ -21,6 +21,8 @@ function print_header() {
 }
 
 function wait_service() {
+  echo "Waiting for $1 to become ready (up to 10 minutes)..."
+
   i=1
   oc get ep $1 -o yaml -n $2 | grep "\- addresses:"
   while [ ! $? -eq 0 ]
