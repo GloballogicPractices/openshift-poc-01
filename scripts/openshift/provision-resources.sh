@@ -80,6 +80,12 @@ function deploy_jenkins() {
   oc set resources dc/jenkins --limits=cpu=1,memory=2Gi --requests=cpu=200m,memory=1Gi -n $PRJ_CI
 }
 
+function deploy_cicd_objects() {
+  print_header "Deploying CI\CD opjects..."
+  
+  oc new-app -n $PRJ_CI -f $GITHUB_RAW_URI/scripts/openshift/application-template-cicd.yaml
+}
+
 # GPTE convention
 function set_default_project() {
   if [ $LOGGEDIN_USER == 'system:admin' ] ; then
@@ -145,9 +151,11 @@ PRJ_DEV=$PRJ_SUFFIX-dev
 PRJ_PROD=$PRJ_SUFFIX-prod
 
 # config
+GITHUB_PROJECT=${GITHUB_PROJECT:-openshift-poc-01}
 GITHUB_ACCOUNT=${GITHUB_ACCOUNT:-andriy-gnennyy-gl}
 GITHUB_REF=${GITHUB_REF:-master}
-GITHUB_URI=https://github.com/$GITHUB_ACCOUNT/openshift-poc-01.git
+GITHUB_URI=https://github.com/$GITHUB_ACCOUNT/$GITHUB_PROJECT.git
+GITHUB_RAW_URI=https://raw.githubusercontent.com/$GITHUB_ACCOUNT/$GITHUB_PROJECT/$GITHUB_REF
 
 ################################################################################
 # MAIN                                                                         #
@@ -168,14 +176,9 @@ case "$ARG_COMMAND" in
     *)
         echo "Deploying OpenShift PoC..."
         create_projects 
-        #print_info
-        #deploy_nexus
-        #wait_for_nexus_to_be_ready
-        #build_images
-        #deploy_guides
-        #deploy_gogs
         deploy_jenkins
 		wait_service "jenkins" $PRJ_CI
+		deploy_cicd_objects
         #add_inventory_template_to_projects
         #deploy_coolstore_test_env
         #deploy_coolstore_prod_env
