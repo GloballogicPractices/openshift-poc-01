@@ -38,6 +38,13 @@ objects:
       jenkinsPipelineStrategy:
         jenkinsfilePath: src/web/Jenkinsfile
       type: JenkinsPipeline
+      env:
+        - name: "BUILD_CONFIG_NAME"
+          value: "${NAMEPFX}-web-bc"
+        - name: "DEPLOY_CONFIG_NAME"
+          value: "${NAMEPFX}-web-dc"
+        - name: "DEPLOY_CONFIG_NAMESPACE"
+          value: "${NAMEPFX}-web-bc"
 - apiVersion: v1
   kind: ImageStream
   metadata:

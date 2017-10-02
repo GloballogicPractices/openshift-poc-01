@@ -38,12 +38,12 @@ try{
 
 		stage('build'){
 			milestone()
-			openshiftBuild(buildConfig: 'dotnet-core-app-web-bc', showBuildLogs: 'true')
+			openshiftBuild(buildConfig: '${env.BUILD_CONFIG_NAME}', showBuildLogs: 'true')
 		}
 
 		stage('deploy') {
 			milestone()
-			openshiftDeploy(deploymentConfig: 'dotnet-core-app-web-dc')
+			openshiftDeploy(deploymentConfig: '${env.DEPLOY_CONFIG_NAME}', namespace: '${env.DEPLOY_CONFIG_NAMESPACE}')
 		}
 	}
 } catch (Exception e) {
