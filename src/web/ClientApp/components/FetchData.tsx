@@ -5,20 +5,17 @@ import 'isomorphic-fetch';
 interface FetchDataExampleState {
     forecasts: WeatherForecast[];
     loading: boolean;
-    svcUrl: string | null;
 }
 
 export class FetchData extends React.Component<RouteComponentProps<{}>, FetchDataExampleState> {
-    private svcUrl: string;
-
     constructor() {
         super();
-        this.state = { forecasts: [], loading: true, svcUrl: document.getElementById('serviceEndpointUrl').getAttribute('value')!};
+        this.state = { forecasts: [], loading: true };
 
-        fetch(this.state.svcUrl!)
+        fetch('api/SampleData/WeatherForecasts')
             .then(response => response.json() as Promise<WeatherForecast[]>)
             .then(data => {
-                this.setState({ forecasts: data, loading: false, svcUrl: this.state.svcUrl});
+                this.setState({ forecasts: data, loading: false });
             });
     }
 
