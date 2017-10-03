@@ -13,7 +13,7 @@ export class FetchData extends React.Component<RouteComponentProps<{}>, FetchDat
 
     constructor() {
         super();
-        this.state = { forecasts: [], loading: true, svcUrl: document.getElementById('serviceEndpointUrl').getAttribute('value')};
+        this.state = { forecasts: [], loading: true, svcUrl: document.getElementById('serviceEndpointUrl').getAttribute('value')!};
 
         fetch(this.state.svcUrl!)
             .then(response => response.json() as Promise<WeatherForecast[]>)
