@@ -8,6 +8,8 @@ interface FetchDataExampleState {
 }
 
 export class FetchData extends React.Component<RouteComponentProps<{}>, FetchDataExampleState> {
+    private svcUrl: string;
+
     constructor() {
         super();
         this.state = { forecasts: [], loading: true };
