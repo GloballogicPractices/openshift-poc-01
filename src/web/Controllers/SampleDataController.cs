@@ -12,7 +12,7 @@ namespace web.Controllers
     [Route("api/[controller]")]
     public class SampleDataController : Controller
     {
-		private HttpClient _httpClient = new HttpClient() {BaseAddress = Environment.GetEnvironmentVariable("WEATHER_SERVICE_ENDPOINT")};
+		private HttpClient _httpClient = new HttpClient() {BaseAddress = new Uri(Environment.GetEnvironmentVariable("WEATHER_SERVICE_ENDPOINT"))};
 		
         [HttpGet("[action]")]
         public async Task WeatherForecasts()
