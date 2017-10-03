@@ -26,4 +26,4 @@ type SampleDataController () =
     [<HttpGet("[action]")>]
     member this.WeatherForecasts() =
         let rng = new Random()
-        seq { for i in 1 .. 5 do yield new WeatherForecast (DateFormatted = DateTime.Now.AddDays(float i).ToString("d"), TemperatureC = rng.Next(-20, 55), Summary = Summaries.[rng.Next(Summaries.Length)]) }
+        seq { for i in 1 .. 15 do yield new WeatherForecast (DateFormatted = DateTime.Now.AddDays(float i).ToString("d"), TemperatureC = rng.Next(-20, 55), Summary = Summaries.[rng.Next(Summaries.Length)]) }
