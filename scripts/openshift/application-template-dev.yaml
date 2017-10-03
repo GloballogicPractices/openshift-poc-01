@@ -124,8 +124,8 @@ objects:
       spec:
         containers:
         - env:
-          - name: FAKE
-            value: ' '
+          - name: WEATHER_SERVICE_ENDPOINT
+            value: 'http://dotnet-core-weather-rt-dotnet-core-dev.52.236.37.25.nip.io/api/SampleData/WeatherForecasts'
           image: ' '
           livenessProbe:
             httpGet:
