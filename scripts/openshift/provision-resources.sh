@@ -165,7 +165,7 @@ PRJ_PROD=$PRJ_SUFFIX-prod
 
 # config
 GITHUB_PROJECT=${GITHUB_PROJECT:-openshift-poc-01}
-GITHUB_ACCOUNT=${GITHUB_ACCOUNT:-andriy-gnennyy-gl}
+GITHUB_ACCOUNT=${GITHUB_ACCOUNT:-GloballogicPractices}
 GITHUB_REF=${GITHUB_REF:-master}
 GITHUB_URI=https://github.com/$GITHUB_ACCOUNT/$GITHUB_PROJECT.git
 GITHUB_RAW_URI=https://raw.githubusercontent.com/$GITHUB_ACCOUNT/$GITHUB_PROJECT/$GITHUB_REF
